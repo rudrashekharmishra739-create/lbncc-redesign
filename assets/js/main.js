@@ -145,17 +145,10 @@
   const carouselRoot = document.getElementById("performers-carousel");
   if (carouselRoot) {
     const stage = document.getElementById("performers-stage");
-    const studentData = [
-      { image: "assets/img/students/student1.png", alt: "Sejal Pal" },
-      { image: "assets/img/students/student2.png", alt: "Anamika Devi" },
-      { image: "assets/img/students/student3.png", alt: "Priyanka Yadav" },
-      { image: "assets/img/students/student4.png", alt: "Treshika Rawat" },
-      { image: "assets/img/students/student5.png", alt: "Ajeet Patel" },
-      { image: "assets/img/students/student6.png", alt: "Top Performer" },
-      { image: "assets/img/students/student7.png", alt: "Top Performer" },
-      { image: "assets/img/students/student8.png", alt: "Top Performer" },
-      { image: "assets/img/students/student9.png", alt: "Top Performer" }
-    ];
+    const studentData = Array.from({ length: 20 }, (_, i) => ({
+      image: "https://picsum.photos/seed/lbncc" + (i + 1) + "/400/500",
+      alt: "Top Performer " + (i + 1)
+    }));
     const n = studentData.length;
     const cardW = 250, cardH = 330, depth = 180, spread = 70, tilt = 18, visibleCards = 4, falloff = 0.2, blurMax = 5;
     const dir = 1; // right
