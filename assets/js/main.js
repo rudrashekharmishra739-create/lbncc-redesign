@@ -140,4 +140,179 @@
 
   // Footer year
   document.querySelectorAll(".yr").forEach((e) => (e.textContent = new Date().getFullYear()));
+
+  // ---------- Depth Carousel (Top Performers) ----------
+  const carouselRoot = document.getElementById("performers-carousel");
+  if (carouselRoot) {
+    const stage = document.getElementById("performers-stage");
+    const studentData = [
+      { image: "assets/img/students/student1.png", alt: "Sejal Pal" },
+      { image: "assets/img/students/student2.png", alt: "Anamika Devi" },
+      { image: "assets/img/students/student3.png", alt: "Priyanka Yadav" },
+      { image: "assets/img/students/student4.png", alt: "Treshika Rawat" },
+      { image: "assets/img/students/student5.png", alt: "Ajeet Patel" },
+      { image: "assets/img/students/student6.png", alt: "Top Performer" },
+      { image: "assets/img/students/student7.png", alt: "Top Performer" },
+      { image: "assets/img/students/student8.png", alt: "Top Performer" },
+      { image: "assets/img/students/student9.png", alt: "Top Performer" }
+    ];
+    const n = studentData.length;
+    const cardW = 250, cardH = 330, depth = 180, spread = 70, tilt = 18, visibleCards = 4, falloff = 0.2, blurMax = 5;
+    const dir = 1; // right
+
+    const cards = studentData.map((item, i) => {
+      const card = document.createElement("div");
+      card.className = "depth-carousel__card";
+      card.style.width = cardW + "px";
+      card.style.height = cardH + "px";
+      card.style.borderRadius = "18px";
+      card.innerHTML = `<img class="depth-carousel__img" src="${item.image}" alt="${item.alt}" draggable="false"><span class="depth-carousel__tint"></span><div class="depth-carousel__label">${item.alt}</div>`;
+      stage.appendChild(card);
+      const tint = card.querySelector(".depth-carousel__tint");
+      return { el: card, tint };
+    });
+
+    let pos = 0; // current float position
+    let focus = 0;
+    let animating = false;
+    let targetPos = 0;
+
+    function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
+
+    function layout(p) {
+      for (let i = 0; i < n; i++) {
+        const card = cards[i];
+        let d = i - p;
+        // loop normalize
+        d = ((d % n) + n) % n;
+        if (d > n / 2) d -= n;
+        const back = Math.max(0, d);
+        const az = Math.abs(d);
+        const shown = az <= visibleCards + 0.5;
+        const tz = -depth * d;
+        const tx = dir * spread * d;
+        const ry = dir * tilt * clamp(d, 0, 1);
+        let opacity = d < 0 ? Math.max(0, 1 + d) : 1;
+        if (!shown) opacity = 0;
+        const brightness = Math.max(0.15, 1 - back * falloff);
+        const blurPx = blurMax > 0 ? Math.min(blurMax, (back / Math.max(1, visibleCards)) * blurMax) : 0;
+        const zi = Math.round(2000 - d * 20);
+        const sc = 1;
+        card.el.style.transform = `translate(-50%, -50%) scale(${sc}) translateX(${tx.toFixed(2)}px) translateZ(${tz.toFixed(2)}px) rotateY(${ry.toFixed(3)}deg)`;
+        card.el.style.opacity = opacity.toFixed(3);
+        card.el.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blurPx.toFixed(2)}px)`;
+        card.el.style.zIndex = String(zi);
+        card.el.style.pointerEvents = shown && opacity > 0.05 ? "auto" : "none";
+        if (card.tint) card.tint.style.opacity = clamp(back * falloff * 1.25, 0, 0.86).toFixed(3);
+      }
+    }
+
+    function animateTo(target, dur) {
+      const start = pos;
+      const startTime = performance.now();
+      const duration = dur || 700;
+      function step(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        pos = start + (target - start) * eased;
+        layout(pos);
+        if (t < 1) requestAnimationFrame(step);
+        else {
+          pos = target;
+          // normalize
+          pos = ((pos % n) + n) % n;
+          layout(pos);
+          animating = false;
+        }
+      }
+      animating = true;
+      requestAnimationFrame(step);
+    }
+
+    function setFocus(rawIndex) {
+      let idx = ((rawIndex % n) + n) % n;
+      let delta = idx - pos;
+      delta = ((delta % n) + n) % n;
+      if (delta > n / 2) delta -= n;
+      animateTo(pos + delta, 700);
+      if (idx !== focus) { focus = idx; }
+    }
+
+    function navigateBy(step) { setFocus(focus + step); }
+
+    // Build controls
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "depth-carousel__arrow depth-carousel__arrow--prev";
+    prevBtn.setAttribute("aria-label", "Previous");
+    prevBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "depth-carousel__arrow depth-carousel__arrow--next";
+    nextBtn.setAttribute("aria-label", "Next");
+    nextBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    carouselRoot.appendChild(prevBtn);
+    carouselRoot.appendChild(nextBtn);
+
+    const dotsWrap = document.createElement("div");
+    dotsWrap.className = "depth-carousel__dots";
+    const dots = studentData.map((_, i) => {
+      const d = document.createElement("button");
+      d.className = "depth-carousel__dot";
+      d.setAttribute("aria-label", "Go to slide " + (i + 1));
+      d.addEventListener("click", () => setFocus(i));
+      dotsWrap.appendChild(d);
+      return d;
+    });
+    carouselRoot.appendChild(dotsWrap);
+
+    function updateDots() {
+      dots.forEach((d, i) => d.classList.toggle("is-active", i === Math.round(((pos % n) + n) % n)));
+    }
+
+    // wrap setFocus to update dots
+    const origSetFocus = setFocus;
+    // override via closure: call updateDots after animation completes (in animateTo finally)
+    // We'll patch animateTo's completion by adding updateDots in layout loop? Instead update dots in a rAF loop.
+    function dotLoop() {
+      updateDots();
+      requestAnimationFrame(dotLoop);
+    }
+    dotLoop();
+
+    prevBtn.addEventListener("click", () => navigateBy(-1));
+    nextBtn.addEventListener("click", () => navigateBy(1));
+
+    // drag
+    let drag = null;
+    carouselRoot.addEventListener("pointerdown", (e) => {
+      drag = { x: e.clientX, startPos: pos, moved: false, id: e.pointerId };
+    });
+    window.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 4) { drag.moved = true; carouselRoot.setPointerCapture(drag.id); }
+      if (!drag.moved) return;
+      const stepPx = Math.max(cardW * 0.55, 40);
+      pos = drag.startPos - dx / stepPx;
+      layout(pos);
+    });
+    window.addEventListener("pointerup", () => {
+      if (!drag) return;
+      if (drag.moved) setFocus(Math.round(pos));
+      drag = null;
+    });
+
+    // autoplay
+    let autoTimer = null;
+    function startAuto() {
+      autoTimer = setInterval(() => { if (!drag) navigateBy(1); }, 3200);
+    }
+    function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+    carouselRoot.addEventListener("mouseenter", stopAuto);
+    carouselRoot.addEventListener("mouseleave", startAuto);
+    startAuto();
+
+    // init
+    layout(0);
+    updateDots();
+  }
 })();
