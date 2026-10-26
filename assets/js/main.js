@@ -146,8 +146,8 @@
   if (carouselRoot) {
     const stage = document.getElementById("performers-stage");
     const studentData = Array.from({ length: 20 }, (_, i) => ({
-      image: "https://picsum.photos/seed/lbncc" + (i + 1) + "/400/500",
-      alt: "Top Performer " + (i + 1)
+      image: "https://placehold.co/400x500/8b1a1a/ffffff?text=Placeholder+" + (i + 1),
+      alt: "Placeholder " + (i + 1)
     }));
     const n = studentData.length;
     const cardW = 250, cardH = 330, depth = 180, spread = 70, tilt = 18, visibleCards = 4, falloff = 0.2, blurMax = 5;
